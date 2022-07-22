@@ -32,4 +32,9 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::post('/users', [UserController::class, 'store']);
     Route::delete('/users/{id}', [UserController::class, 'destroy']);
     Route::put('/users/{id}', [UserController::class, 'update']);
+
+    Route::get('/roles', [RoleController::class, 'index']);
+    Route::post('/roles', [RoleController::class, 'store']);
+    Route::delete('/roles/{id}', [RoleController::class, 'destroy']);
+    Route::put('/roles/{id}', [RoleController::class, 'update']);
 });
