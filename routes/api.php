@@ -24,6 +24,7 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/users/{id}/edit', [UserController::class, 'edit']);
 Route::get('/users/create', [UserController::class, 'create']);//return roles
+Route::get('/roles/{id}/edit', [RoleController::class, 'edit']);
 
 // Protected routes
 Route::group(['middleware' => ['auth:sanctum']], function () {
