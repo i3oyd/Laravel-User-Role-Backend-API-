@@ -41,9 +41,11 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        $user = User::where('id',auth()->id())->first();
-        if($user->role_id != 1){ //1 == admin
-            abort(401);
+        $authUser = User::where('id',auth()->id())->first();
+        if($authUser->role_id != 1){ //1 == admin
+            return response([
+                'message' => 'Unauthorized User. Needs admin privileges.',
+            ], 401);
         }
         $fields = $request->validate([
             'name' => 'required|string',
@@ -98,13 +100,31 @@ class UserController extends Controller
      */
     public function update(Request $request, $id)
     {
+        $fields = $request->validate([
+            'name' => 'required|string',
+            'email' => 'required|string',
+            'password' => 'required|string|min:8|confirmed',
+            'role_id' => 'required'
+        ]);
+
+        $authUser = User::where('id',auth()->id())->first();
         $user = User::find($id);
         //update user data if role of current user is admin or if the data is from the current user
-        if($user->role_id == 1 || $user->id == auth()->id()){
-            $user->update($request->all());
-            return $user;
+        if($authUser->role_id == 1 || $user->id == auth()->id()){//1=admin role
+            $user->update([
+                'name' => $fields['name'],
+                'email' => $fields['email'],
+                'password' => bcrypt($fields['password']),
+                'role_id' => $fields['role_id']
+            ]);
+            return response([
+                'message' => 'User data updated.',
+                'user' => $user
+            ]);
         }
-        abort(401);
+        return response([
+            'message' => 'Unauthorized User. Needs admin privileges.',
+        ], 401);
     }
 
     /**
@@ -115,9 +135,9 @@ class UserController extends Controller
      */
     public function destroy($id)
     {
-        $user = User::find(auth()->id());
+        $authUser = User::find(auth()->id());
         //delete user data if role of the current user is admin
-        if($user->role_id == 1){
+        if($authUser->role_id == 1){//1 == admin
             User::destroy($id);
             return response([
                 'message' => 'User deleted',
@@ -125,6 +145,8 @@ class UserController extends Controller
             ]);
         }
 
-        abort(401);
+        return response([
+            'message' => 'Unauthorized User. Needs admin privileges.',
+        ], 401);
     }
 }
