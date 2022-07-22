@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Role;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class RoleController extends Controller
 {
@@ -14,7 +16,7 @@ class RoleController extends Controller
      */
     public function index()
     {
-        //
+        return ['roles' => Role::all()];
     }
 
     /**
@@ -35,8 +37,30 @@ class RoleController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $user = User::where('id',auth()->id())->first();
+        if($user->role_id != 1){ //1 == admin
+            return response([
+                'message' => 'Unauthorized User. Needs admin privileges.',
+            ], 401);
+        }
+        $fields = $request->validate([
+            'name' => 'required|string',
+            'description' => 'required|string',
+        ]);
+        
+        $role = Role::create([
+            'name' => $fields['name'],
+            'description' => $fields['description']
+        ]);
+        if($role){
+            return response([
+                'message' => 'Role created',
+                'role' => $role
+            ]);
+        }
+
     }
+
 
     /**
      * Display the specified resource.
@@ -55,9 +79,9 @@ class RoleController extends Controller
      * @param  \App\Models\Role  $role
      * @return \Illuminate\Http\Response
      */
-    public function edit(Role $role)
+    public function edit($role)
     {
-        //
+        return ['role' => Role::find($role)];
     }
 
     /**
@@ -67,9 +91,27 @@ class RoleController extends Controller
      * @param  \App\Models\Role  $role
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Role $role)
+    public function update($role,Request $request)
     {
-        //
+        $fields = $request->validate([
+            'name' => 'required|string',
+            'description' => 'required|string',
+        ]);
+
+        $role = Role::find($role);
+        //update role data if role of current user is admin
+        if(auth()->id() == 1){//1=admin
+            $role->update(['name' => $fields['name'],
+            'description' => $fields['description']
+        ]);
+        return response([
+            'message' => 'Role updated.',
+            'role' => $role
+        ]);
+        }
+        return response([
+            'message' => 'Unauthorized User. Needs admin privileges.'
+        ], 401);
     }
 
     /**
@@ -78,8 +120,19 @@ class RoleController extends Controller
      * @param  \App\Models\Role  $role
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Role $role)
+    public function destroy($role)
     {
-        //
+        $user = User::find(auth()->id());
+        //delete user data if role of the current user is admin
+        if($user->role_id == 1){//1 == admin
+            Role::destroy($role);
+            return response([
+                'message' => 'Role deleted'
+            ]);
+        }
+
+        return response([
+            'message' => 'Unauthorized User. Needs admin privileges.'
+        ], 401);
     }
 }
